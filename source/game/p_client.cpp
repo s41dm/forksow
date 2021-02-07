@@ -394,7 +394,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
 	client->ps.pmove.pm_time = 14;
-	client->ps.pmove.no_control_time = CLIENT_RESPAWN_FREEZE_DELAY;
 
 	G_UseTargets( spawnpoint, self );
 
