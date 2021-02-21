@@ -781,6 +781,7 @@ static void objectGameClient_GiveWeapon( WeaponType weapon, gclient_t * self ) {
 
 	ps->weapons[ weapon ].owned = true;
 	ps->weapons[ weapon ].ammo = GS_GetWeaponDef( weapon )->clip_size;
+	ps->pending_weapon = weapon;
 }
 
 static void objectGameClient_InventoryClear( gclient_t *self ) {
@@ -788,13 +789,7 @@ static void objectGameClient_InventoryClear( gclient_t *self ) {
 
 	self->ps.weapon = Weapon_None;
 	self->ps.pending_weapon = Weapon_None;
-	self->ps.weapon_state = WeaponState_Ready;
-}
-
-static void objectGameClient_SelectWeapon( int index, gclient_t *self ) {
-	if( self->ps.weapons[ index ].weapon != Weapon_None ) {
-		self->ps.pending_weapon = self->ps.weapons[ index ].weapon;
-	}
+	self->ps.new_weapon_state = "";
 }
 
 static void objectGameClient_addAward( asstring_t *msg, gclient_t *self ) {
@@ -903,7 +898,6 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( Entity @, getEnt, ( ) const ), asFUNCTION( objectGameClient_GetEntity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, giveWeapon, ( WeaponType weapon ) ), asFUNCTION( objectGameClient_GiveWeapon ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, inventoryClear, ( ) ), asFUNCTION( objectGameClient_InventoryClear ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, selectWeapon, ( int tag ) ), asFUNCTION( objectGameClient_SelectWeapon ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, addAward, ( const String &in ) ), asFUNCTION( objectGameClient_addAward ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, execGameCommand, ( const String &in ) ), asFUNCTION( objectGameClient_execGameCommand ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, getUserInfoKey, ( const String &in ) const ), asFUNCTION( objectGameClient_getUserInfoKey ), asCALL_CDECL_OBJLAST },
