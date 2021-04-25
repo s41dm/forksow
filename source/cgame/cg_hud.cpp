@@ -932,7 +932,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 
 	int num_weapons = 0;
 	for( size_t i = 0; i < ARRAY_COUNT( ps->weapons ); i++ ) {
-		if( ps->weapons[ i ].owned ) {
+		if( ps->weapons[ i ].weapon != Weapon_None ) {
 			num_weapons++;
 		}
 	}
@@ -964,13 +964,9 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 		Draw2DBox( curx + border + padding, cury + border + padding, iconw, iconh, cgs.media.shaderBombIcon, color );
 	}
 
-	int n = 0;
-	for( WeaponType i = Weapon_None + 1; i < Weapon_Count; i++ ) {
-		if( !ps->weapons[ i - 1 ].owned )
-			continue;
-
-		int curx = CG_HorizontalAlignForWidth( x + offx * ( n + bomb ), alignment, total_width );
-		int cury = CG_VerticalAlignForHeight( y + offy * ( n + bomb ), alignment, total_height );
+	for( int i = 0; i < num_weapons; i++ ) {
+		int curx = CG_HorizontalAlignForWidth( x + offx * ( i + bomb ), alignment, total_width );
+		int cury = CG_VerticalAlignForHeight( y + offy * ( i + bomb ), alignment, total_height );
 
 		WeaponType weap = ps->weapons[ i ].weapon;
 		int ammo = ps->weapons[ i ].ammo;
@@ -1029,7 +1025,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 		// first try the weapon specific bind
 		char bind[ 32 ];
 		if( !CG_GetBoundKeysString( va( "use %s", def->short_name ), bind, sizeof( bind ) ) ) {
-			CG_GetBoundKeysString( va( "weapon %i", n + 1 ), bind, sizeof( bind ) );
+			CG_GetBoundKeysString( va( "weapon %i", i + 1 ), bind, sizeof( bind ) );
 		}
 
 		DrawText( GetHUDFont(), bind_font_size, va( "[ %s ]", bind) , Alignment_CenterMiddle, curx + iw * 0.5f, cury + ih * 1.2f - pady_sel, layout_cursor_color, layout_cursor_font_border );

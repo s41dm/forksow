@@ -262,7 +262,6 @@ void G_GhostClient( edict_t *ent ) {
 
 	ent->r.client->ps.weapon = Weapon_None;
 	ent->r.client->ps.pending_weapon = Weapon_None;
-	ent->r.client->ps.weapon_state = WeaponState_Ready;
 	ent->r.client->ps.weapon_time = 0;
 
 	GClip_LinkEntity( ent );
@@ -839,14 +838,17 @@ void ClientDisconnect( edict_t *ent, const char *reason ) {
 //==============================================================
 
 void G_PredictedEvent( int entNum, int ev, u64 parm ) {
+	assert( ev != EV_FIREWEAPON );
+
 	edict_t *ent = &game.edicts[entNum];
+
 	switch( ev ) {
 		case EV_SMOOTHREFIREWEAPON: // update the firing
 			G_FireWeapon( ent, parm );
 			break; // don't send the event
 
 		case EV_WEAPONACTIVATE:
-			ent->s.weapon = parm;
+			ent->s.weapon = parm >> 1;
 			G_AddEvent( ent, ev, parm, true );
 			break;
 
@@ -997,15 +999,9 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		}
 	}
 
-	ent->s.weapon = GS_ThinkPlayerWeapon( &server_gs, &client->ps, ucmd, client->timeDelta );
+	UpdateWeapons( &server_gs, svs.gametime, &client->ps, ucmd, client->timeDelta );
 
-	if( G_IsDead( ent ) ) {
-		if( ent->deathTimeStamp + g_respawn_delay_min->integer <= level.time ) {
-			client->resp.snap.buttons |= ucmd->buttons;
-		}
-	} else if( client->ps.pmove.no_control_time <= 0 ) {
-		client->resp.snap.buttons |= ucmd->buttons;
-	}
+	client->resp.snap.buttons |= ucmd->buttons;
 }
 
 /*

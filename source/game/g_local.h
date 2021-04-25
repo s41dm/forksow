@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon/qcommon.h"
 #include "qcommon/hash.h"
 #include "gameshared/gs_public.h"
+#include "gameshared/gs_weapons.h"
 #include "game/g_public.h"
 #include "game/g_gametypes.h"
 #include "game/g_ai.h"
