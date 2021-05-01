@@ -262,7 +262,8 @@ void G_GhostClient( edict_t *ent ) {
 
 	ent->r.client->ps.weapon = Weapon_None;
 	ent->r.client->ps.pending_weapon = Weapon_None;
-	ent->r.client->ps.weapon_time = 0;
+	ent->r.client->ps.weapon_state = WeaponState_SwitchWeapon;
+	ent->r.client->ps.weapon_state_time = 0;
 
 	GClip_LinkEntity( ent );
 }
@@ -847,11 +848,6 @@ void G_PredictedEvent( int entNum, int ev, u64 parm ) {
 			G_FireWeapon( ent, parm );
 			break; // don't send the event
 
-		case EV_WEAPONACTIVATE:
-			ent->s.weapon = parm >> 1;
-			G_AddEvent( ent, ev, parm, true );
-			break;
-
 		default:
 			G_AddEvent( ent, ev, parm, true );
 			break;
@@ -993,13 +989,15 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 			// player can't touch projectiles, only projectiles can touch the player
 			G_CallTouch( other, ent, NULL, 0 );
 		}
+	}
+
+	if( ent->movetype != MOVETYPE_NONE ) {
+		UpdateWeapons( &server_gs, &client->ps, ucmd, client->timeDelta );
 
 		if( ent->s.origin.z <= -1024 ) {
 			G_Damage( ent, world, world, Vec3( 0.0f ), Vec3( 0.0f ), ent->s.origin, 1337, 0, 0, MeanOfDeath_Void );
 		}
 	}
-
-	UpdateWeapons( &server_gs, svs.gametime, &client->ps, ucmd, client->timeDelta );
 
 	client->resp.snap.buttons |= ucmd->buttons;
 }

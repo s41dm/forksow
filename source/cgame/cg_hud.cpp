@@ -979,7 +979,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 
 		if( def->clip_size != 0 ) {
 			if( weap == ps->weapon && ps->weapon_state == WeaponState_Reloading ) {
-				ammo_frac = 1.0f - float( ps->weapon_time ) / float( def->reload_time );
+				ammo_frac = 1.0f - float( ps->weapon_state_time ) / float( def->reload_time );
 			}
 			else {
 				color = Vec4( 0.0f, 1.0f, 0.0f, 1.0f );
@@ -993,9 +993,9 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 
 		const Material * icon = cgs.media.shaderWeaponIcon[ weap ];
 
-		bool selected = weap == ps->pending_weapon;
-		int offset = ( selected ? border_sel : 0 );
-		int pady_sel = ( selected ? pad_sel : 0 );
+		bool selected = ps->pending_weapon != Weapon_None ? weap == ps->pending_weapon : weap == ps->weapon;
+		int offset = selected ? border_sel : 0;
+		int pady_sel = selected ? pad_sel : 0;
 
 		if( ammo_frac < 1.0f ) {
 			Draw2DBox( curx - offset, cury - offset - pady_sel, iw + offset * 2, ih + offset * 2, cls.white_material, light_gray );

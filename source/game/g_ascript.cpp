@@ -806,13 +806,13 @@ static void objectGameClient_InventoryClear( gclient_t *self ) {
 
 	self->ps.weapon = Weapon_None;
 	self->ps.pending_weapon = Weapon_None;
-	self->ps.new_weapon_state = WeaponState2_SwitchWeapon;
+	self->ps.weapon_state = WeaponState_SwitchWeapon;
 }
 
 static void objectGameClient_SelectWeapon( int index, gclient_t *self ) {
 	if( self->ps.weapons[ index ].weapon != Weapon_None ) {
 		self->ps.pending_weapon = self->ps.weapons[ index ].weapon;
-		self->ps.new_weapon_state = WeaponState2_SwitchWeapon;
+		self->ps.weapon_state = WeaponState_SwitchWeapon;
 	}
 }
 

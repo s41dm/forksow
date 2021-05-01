@@ -41,30 +41,19 @@ enum WeaponType_ : WeaponType {
 
 typedef u8 WeaponState;
 enum WeaponState_ : WeaponState {
-	WeaponState_Ready,
+	WeaponState_SwitchWeapon,
+	WeaponState_Init,
 	WeaponState_SwitchingIn,
 	WeaponState_SwitchingOut,
+	WeaponState_Idle,
 	WeaponState_Firing,
 	WeaponState_FiringSemiAuto,
 	WeaponState_FiringSmooth,
 	WeaponState_FiringEntireClip,
 	WeaponState_Reloading,
-};
 
-typedef u8 WeaponState2;
-enum WeaponState2_ : WeaponState2 {
-	WeaponState2_SwitchWeapon,
-	WeaponState2_SwitchingIn,
-	WeaponState2_SwitchingOut,
-	WeaponState2_Idle,
-	WeaponState2_Firing,
-	WeaponState2_FiringSemiAuto,
-	WeaponState2_FiringSmooth,
-	WeaponState2_FiringEntireClip,
-	WeaponState2_Reloading,
-
-	WeaponState2_Cooking,
-	WeaponState2_Throwing,
+	WeaponState_Cooking,
+	WeaponState_Throwing,
 };
 
 enum FiringMode {
@@ -267,14 +256,12 @@ struct SyncPlayerState {
 	s16 health;
 
 	WeaponState weapon_state;
+	s16 weapon_state_time;
+
 	WeaponType weapon;
 	WeaponType pending_weapon;
 	WeaponType last_weapon;
-	s16 weapon_time;
 	s16 zoom_time;
-
-	WeaponState2 new_weapon_state;
-	s64 weapon_state_time;
 
 	int team;
 	int real_team;

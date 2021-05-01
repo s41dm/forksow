@@ -25,8 +25,8 @@ struct WeaponDef {
 	s64 reload_time;
 	bool staged_reloading;
 
-	s64 weaponup_time;
-	s64 weapondown_time;
+	s64 switch_in_time;
+	s64 switch_out_time;
 	s64 refire_time;
 	s64 range;
 
@@ -50,7 +50,7 @@ struct WeaponDef {
 	float spread;
 };
 
-void UpdateWeapons( const gs_state_t * gs, s64 now, SyncPlayerState * ps, const usercmd_t * cmd, int timeDelta );
+void UpdateWeapons( const gs_state_t * gs, SyncPlayerState * ps, const usercmd_t * cmd, int timeDelta );
 
 const WeaponDef * GS_GetWeaponDef( WeaponType weapon );
 
