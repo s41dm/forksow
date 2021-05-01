@@ -89,6 +89,15 @@ enum RoundType_ {
 	RoundType_OvertimeMatchPoint,
 };
 
+using RoundState = u8;
+enum RoundState_ : RoundState {
+	RoundState_None,
+	RoundState_Countdown,
+	RoundState_Round,
+	RoundState_Finished,
+	RoundState_Post,
+};
+
 enum BombDown {
 	BombDown_Dropped,
 	BombDown_Planting,
@@ -126,6 +135,7 @@ struct SyncGameState {
 	int64_t match_start;
 	int64_t match_duration;
 	int64_t clock_override;
+	RoundState round_state;
 	RoundType round_type;
 	u8 max_team_players;
 

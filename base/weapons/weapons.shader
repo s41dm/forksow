@@ -186,3 +186,25 @@ weapons/stake/texture
 		rgbGen const 0.128 0.128 0.128
 	}
 }
+
+weapons/road
+{
+	shaded
+	specular 10
+	shininess 8
+	{
+		map $whiteimage
+		rgbGen const 0.128 0.128 0.128
+	}
+}
+
+weapons/minigun
+{
+	shaded
+	specular 10
+	shininess 8
+	{
+		map $whiteimage
+		rgbGen const 0.128 0.128 0.128
+	}
+}

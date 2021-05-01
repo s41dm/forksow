@@ -1114,7 +1114,7 @@ static void PM_AdjustBBox() {
 	}
 
 	if( pml.upPush < 0 && ( pm->playerState->pmove.features & PMFEAT_CROUCH ) ) {
-		if( pm->playerState->pmove.crouch_time == 0 ) {
+		if( pm->playerState->pmove.crouch_time == 0 && pmove_gs->gameState.round_state >= RoundState_Finished ) {
 			pm->playerState->pmove.tbag_time = Min2( pm->playerState->pmove.tbag_time + TBAG_AMOUNT_PER_CROUCH, int( MAX_TBAG_TIME ) );
 
 			if( pm->playerState->pmove.tbag_time >= TBAG_THRESHOLD ) {
