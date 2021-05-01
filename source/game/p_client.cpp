@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "game/g_local.h"
 
-#define PLAYER_MASS 200
+constexpr int PLAYER_MASS = 75;
 
 static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker, int topAssistEntNo ) {
 	int mod = meansOfDeath;
@@ -1058,5 +1058,3 @@ void G_CheckClientRespawnClick( edict_t *ent ) {
 		}
 	}
 }
-
-#undef PLAYER_MASS
