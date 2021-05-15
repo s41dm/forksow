@@ -200,16 +200,20 @@ static GLenum TextureWrapToGL( TextureWrap wrap ) {
 	return GL_INVALID_ENUM;
 }
 
-static GLenum TextureFilterToGL( TextureFilter filter ) {
+static void TextureFilterToGL( TextureFilter filter, GLenum * min, GLenum * mag ) {
 	switch( filter ) {
 		case TextureFilter_Linear:
-			return GL_LINEAR;
+			*min = GL_LINEAR_MIPMAP_LINEAR;
+			*mag = GL_LINEAR;
+			return;
+
 		case TextureFilter_Point:
-			return GL_NEAREST;
+			*min = GL_NEAREST_MIPMAP_NEAREST;
+			*mag = GL_NEAREST;
+			return;
 	}
 
 	assert( false );
-	return GL_INVALID_ENUM;
 }
 
 static void VertexFormatToGL( VertexFormat format, GLenum * type, int * num_components, bool * integral, GLboolean * normalized ) {
@@ -985,9 +989,11 @@ static Texture NewTextureSamples( TextureConfig config, int msaa_samples ) {
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TextureWrapToGL( config.wrap ) );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TextureWrapToGL( config.wrap ) );
 
-		GLenum filter = TextureFilterToGL( config.filter );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter );
+		GLenum min_filter, mag_filter;
+		TextureFilterToGL( config.filter, &min_filter, &mag_filter );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, config.num_mipmaps );
 
 		if( config.wrap == TextureWrap_Border ) {
 			glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, ( GLfloat * ) &config.border_color );
@@ -1015,14 +1021,18 @@ static Texture NewTextureSamples( TextureConfig config, int msaa_samples ) {
 				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_GREEN );
 			}
 
-			glTexImage2D( GL_TEXTURE_2D, 0, internal_format,
-				config.width, config.height, 0, channels, type, config.data );
+			for( u32 i = 0; i < config.num_mipmaps; i++ ) {
+				glTexImage2D( GL_TEXTURE_2D, i, internal_format,
+					config.width >> i, config.height >> i, 0, channels, type, config.data );
+			}
 		}
 		else {
-			u32 size = ( BitsPerPixel( config.format ) * config.width * config.height ) / 8;
-			assert( size < S32_MAX );
-			glCompressedTexImage2D( GL_TEXTURE_2D, 0, internal_format,
-				config.width, config.height, 0, size, config.data );
+			for( u32 i = 0; i < config.num_mipmaps; i++ ) {
+				u32 size = ( BitsPerPixel( config.format ) * ( config.width >> i ) * ( config.height >> i ) ) / 8;
+				assert( size < S32_MAX );
+				glCompressedTexImage2D( GL_TEXTURE_2D, i, internal_format,
+					config.width >> i, config.height >> i, 0, size, config.data );
+			}
 		}
 	}
 	else {

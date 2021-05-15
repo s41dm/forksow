@@ -34,6 +34,7 @@ require( "libs.mbedtls" )
 require( "libs.meshoptimizer" )
 require( "libs.monocypher" )
 require( "libs.openal" )
+require( "libs.rgbcx" )
 require( "libs.stb" )
 require( "libs.tracy" )
 require( "libs.whereami" )
@@ -166,3 +167,19 @@ end
 obj_cxxflags( "source/game/angelwrap/.+", "-I third-party/angelscript/sdk/angelscript/include" )
 obj_cxxflags( "source/.+_as_.+", "-I third-party/angelscript/sdk/angelscript/include" )
 obj_cxxflags( "source/.+_ascript.cpp", "-I third-party/angelscript/sdk/angelscript/include" )
+
+do
+	bin( "bc4", {
+		srcs = {
+			"source/tools/bc4/bc4.cpp",
+		},
+
+		libs = {
+			"rgbcx",
+			"stb_image_resize",
+		},
+
+		gcc_extra_ldflags = "-lm -lpthread -ldl -no-pie -static-libstdc++",
+		msvc_extra_ldflags = "ole32.lib ws2_32.lib crypt32.lib",
+	} )
+end
