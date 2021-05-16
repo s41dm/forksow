@@ -232,7 +232,6 @@ void Com_DPrintf( const char *format, ... ) {
 	Com_Printf( "%s", msg );
 }
 
-
 /*
 * Com_Error
 *
@@ -246,7 +245,6 @@ void Com_Error( com_error_code_t code, const char *format, ... ) {
 	static bool recursive = false;
 
 	if( recursive ) {
-		Com_Printf( "recursive error after: %s", msg ); // wsw : jal : log it
 		Sys_Error( "recursive error after: %s", msg );
 	}
 	recursive = true;

@@ -6,17 +6,8 @@ const bool is_dedicated_server = true;
 
 void Sys_InitTime();
 
-void Sys_Error( const char *format, ... ) {
-	va_list argptr;
-	char msg[1024];
-
-	va_start( argptr, format );
-	vsnprintf( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
+void Sys_ShowErrorMessage( const char * msg ) {
 	Sys_ConsoleOutput( msg );
-
-	exit( 1 );
 }
 
 void Sys_Quit() {

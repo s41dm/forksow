@@ -1,5 +1,7 @@
 #include "qcommon/base.h"
+#include "qcommon/fs.h"
 #include "qcommon/span2d.h"
+#include "qcommon/string.h"
 #include "client/renderer/dds.h"
 
 #include "rgbcx/rgbcx.h"
@@ -9,6 +11,27 @@
 #include "stb/stb_image.h"
 
 #include "stb/stb_image_resize.h"
+
+static Span< const char > FileExtension( const char * path ) {
+	const char * filename = strrchr( path, '/' );
+	const char * ext = strchr( filename == NULL ? path : filename, '.' );
+	return ext == NULL ? Span< const char >() : MakeSpan( ext );
+}
+
+static Span< const char > StripExtension( const char * path ) {
+	Span< const char > ext = FileExtension( path );
+	return Span< const char >( path, strlen( path ) - ext.n );
+}
+
+void Sys_ShowErrorMessage( const char * msg ) {
+	printf( "%s\n", msg );
+}
+
+void Com_Printf( const char * format, ... ) {
+	va_list argptr;
+	va_start( argptr, format );
+	vprintf( format, argptr );
+}
 
 static u32 BlockFormatMipLevels( u32 w, u32 h ) {
 	u32 dim = Max2( w, h );
@@ -30,25 +53,6 @@ static void MipDims( u32 * mip_w, u32 * mip_h, u32 w, u32 h, u32 level ) {
 static u32 MipSize( u32 w, u32 h, u32 level ) {
 	MipDims( &w, &h, w, h, level );
 	return w * h;
-}
-
-static void * Alloc( size_t size ) {
-	void * p = malloc( size );
-	if( p == NULL ) {
-		printf( "malloc failed\n" );
-		abort();
-	}
-	return p;
-}
-
-template< typename T >
-T * AllocMany( size_t n ) {
-	return ( T * ) Alloc( n * sizeof( T ) );
-}
-
-template< typename T >
-Span< T > AllocSpan( size_t n ) {
-	return Span< T >( AllocMany< T >( n ), n );
 }
 
 int main( int argc, char ** argv ) {
@@ -85,15 +89,13 @@ int main( int argc, char ** argv ) {
 	constexpr u32 BC4BlockSize = ( 4 * 4 * BC4BitsPerPixel ) / 8;
 
 	u32 bc4_bytes = ( total_size * BC4BitsPerPixel ) / 8;
-	Span< u8 > bc4 = AllocSpan< u8 >( bc4_bytes );
+	Span< u8 > bc4 = ALLOC_SPAN( sys_allocator, u8, bc4_bytes );
 	u32 bc4_cursor = 0;
 
-	printf( "total size %u -> %u\n", total_size, bc4_bytes );
-
-	u8 * src_level = AllocMany< u8 >( w * h );
+	u8 * resized = ALLOC_MANY( sys_allocator, u8, w * h );
 
 	defer { free( bc4.ptr ); };
-	defer { free( src_level ); };
+	defer { free( resized ); };
 
 	rgbcx::init();
 
@@ -103,7 +105,7 @@ int main( int argc, char ** argv ) {
 
 		int ok = stbir_resize_uint8(
 			pixels, w, h, 0,
-			src_level, mip_w, mip_h, 0,
+			resized, mip_w, mip_h, 0,
 			1
 		);
 
@@ -112,17 +114,22 @@ int main( int argc, char ** argv ) {
 			return 1;
 		}
 
-		Span2D< const u8 > mip = Span2D< u8 >( pixels, mip_w, mip_h );
+		Span2D< const u8 > mip = Span2D< u8 >( resized, mip_w, mip_h );
 
 		for( u32 row = 0; row < mip_h / 4; row++ ) {
 			for( u32 col = 0; col < mip_w / 4; col++ ) {
 				Span2D< const u8 > src = mip.slice( col * 4, row * 4, 4, 4 );
+				u8 src_block[ 16 ];
+				CopySpan2D( Span2D< u8 >( src_block, 4, 4 ), src );
+
 				Span< u8 > dst = bc4.slice( bc4_cursor, bc4_cursor + BC4BlockSize );
-				rgbcx::encode_bc4( dst.ptr, src.ptr, src.row_stride );
+				rgbcx::encode_bc4( dst.ptr, src_block, 1 );
 				bc4_cursor += BC4BlockSize;
 			}
 		}
 	}
+
+	assert( bc4_cursor == bc4.num_bytes() );
 
 	DDSHeader dds_header = { };
 	dds_header.magic = DDSMagic;
@@ -131,14 +138,16 @@ int main( int argc, char ** argv ) {
 	dds_header.mipmap_count = num_levels;
 	dds_header.format = DDSTextureFormat_BC4;
 
-	FILE * dds = fopen( "mipped.dds", "wb" );
+	DynamicString dds_path( sys_allocator, "{}.dds", argv[ 1 ] );
+
+	FILE * dds = OpenFile( sys_allocator, dds_path.c_str(), "wb" );
 	if( dds == NULL ) {
 		printf( "shit\n" );
 		return 1;
 	}
 
 	fwrite( &dds_header, sizeof( dds_header ), 1, dds );
-	fwrite( bc4.ptr, 1, bc4_bytes, dds );
+	fwrite( bc4.ptr, sizeof( bc4[ 0 ] ), bc4.n, dds );
 	fclose( dds );
 
 	return 0;

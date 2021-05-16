@@ -993,13 +993,15 @@ static Texture NewTextureSamples( TextureConfig config, int msaa_samples ) {
 		TextureFilterToGL( config.filter, &min_filter, &mag_filter );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, config.num_mipmaps );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, config.num_mipmaps - 1 );
 
 		if( config.wrap == TextureWrap_Border ) {
 			glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, ( GLfloat * ) &config.border_color );
 		}
 
 		if( !CompressedTextureFormat( config.format ) ) {
+			assert( config.num_mipmaps == 1 );
+
 			if( channels == GL_RED ) {
 				if( config.format == TextureFormat_A_U8 ) {
 					glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_ONE );
@@ -1021,17 +1023,24 @@ static Texture NewTextureSamples( TextureConfig config, int msaa_samples ) {
 				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_GREEN );
 			}
 
-			for( u32 i = 0; i < config.num_mipmaps; i++ ) {
-				glTexImage2D( GL_TEXTURE_2D, i, internal_format,
-					config.width >> i, config.height >> i, 0, channels, type, config.data );
-			}
+			glTexImage2D( GL_TEXTURE_2D, 0, internal_format,
+				config.width, config.height, 0, channels, type, config.data );
 		}
 		else {
+			if( config.format == TextureFormat_BC4 ) {
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_ONE );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_ONE );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_ONE );
+				glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED );
+			}
+
+			u32 mipmap_cursor = 0;
 			for( u32 i = 0; i < config.num_mipmaps; i++ ) {
 				u32 size = ( BitsPerPixel( config.format ) * ( config.width >> i ) * ( config.height >> i ) ) / 8;
 				assert( size < S32_MAX );
 				glCompressedTexImage2D( GL_TEXTURE_2D, i, internal_format,
-					config.width >> i, config.height >> i, 0, size, config.data );
+					config.width >> i, config.height >> i, 0, size, ( ( const u8 * ) config.data ) + mipmap_cursor );
+				mipmap_cursor += size;
 			}
 		}
 	}

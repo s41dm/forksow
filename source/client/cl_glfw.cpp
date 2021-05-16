@@ -17,19 +17,6 @@ GLFWwindow * window = NULL;
 static bool running_in_debugger = false;
 const bool is_dedicated_server = false;
 
-void Sys_Error( const char * format, ... ) {
-	va_list argptr;
-	char msg[ 1024 ];
-
-	va_start( argptr, format );
-	vsnprintf( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	Sys_ShowErrorMessage( msg );
-
-	abort();
-}
-
 void Sys_Quit() {
 	Qcommon_Shutdown();
 	glfwTerminate();

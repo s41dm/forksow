@@ -813,11 +813,10 @@ void InitMaterials() {
 			ZoneText( job->in.path, strlen( job->in.path ) );
 
 			job->out.pixels = stbi_load_from_memory( job->in.data.ptr, job->in.data.num_bytes(), &job->out.width, &job->out.height, &job->out.channels, 0 );
-			job->out.failure_reason = stbi_failure_reason();
 		} );
 
 		for( DecodeSTBTextureJob job : jobs ) {
-			LoadSTBTexture( job.in.path, job.out.pixels, job.out.width, job.out.height, job.out.channels, job.out.failure_reason );
+			LoadSTBTexture( job.in.path, job.out.pixels, job.out.width, job.out.height, job.out.channels, stbi_failure_reason() );
 		}
 	}
 
