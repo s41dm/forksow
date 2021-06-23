@@ -55,8 +55,11 @@ struct Material {
 	bool mask_outlines = false;
 	bool shaded = false;
 	float alpha_cutoff = 0.0f;
-	float specular = 0.0f;
-	float shininess = 64.0f;
+	float ks = 0.5f;
+	float metallic = 0.0f;
+	float roughness = 0.5f;
+	float ior = 1.0f;
+	float anisotropic = 0.0f;
 
 	TCMod tcmod = { };
 };

@@ -166,12 +166,24 @@ static void ParseShaded( Material * material, Span< const char > name, Span< con
 	material->shaded = true;
 }
 
-static void ParseSpecular( Material * material, Span< const char > name, Span< const char > * data ) {
-	material->specular = ParseMaterialFloat( data );
+static void ParseKs( Material * material, Span< const char > name, Span< const char > * data ) {
+	material->ks = ParseMaterialFloat( data );
 }
 
-static void ParseShininess( Material * material, Span< const char > name, Span< const char > * data ) {
-	material->shininess = ParseMaterialFloat( data );
+static void ParseMetallic( Material * material, Span< const char > name, Span< const char > * data ) {
+	material->metallic = ParseMaterialFloat( data );
+}
+
+static void ParseRoughness( Material * material, Span< const char > name, Span< const char > * data ) {
+	material->roughness = ParseMaterialFloat( data );
+}
+
+static void ParseIOR( Material * material, Span< const char > name, Span< const char > *data ) {
+	material->ior = ParseMaterialFloat( data );
+}
+
+static void ParseAnisotropic( Material * material, Span< const char > name, Span< const char > *data ) {
+	material->anisotropic = ParseMaterialFloat( data );
 }
 
 static const MaterialSpecKey shaderkeys[] = {
@@ -179,8 +191,11 @@ static const MaterialSpecKey shaderkeys[] = {
 	{ "decal", ParseDecal },
 	{ "maskoutlines", ParseMaskOutlines },
 	{ "shaded", ParseShaded },
-	{ "specular", ParseSpecular },
-	{ "shininess", ParseShininess },
+	{ "ks", ParseKs },
+	{ "metallic", ParseMetallic },
+	{ "roughness", ParseRoughness },
+	{ "ior", ParseIOR },
+	{ "anisotropic", ParseAnisotropic  },
 
 	{ }
 };
@@ -290,7 +305,6 @@ static const MaterialSpecKey shaderpasskeys[] = {
 	{ "map", ParseMap },
 	{ "rgbgen", ParseRGBGen },
 	{ "tcmod", ParseTCMod },
-
 	{ }
 };
 
@@ -740,16 +754,16 @@ void InitMaterials() {
 	world_material.rgbgen.args[ 1 ] = 0.17f;
 	world_material.rgbgen.args[ 2 ] = 0.17f;
 	world_material.rgbgen.args[ 3 ] = 1.0f;
-	world_material.specular = 3.0f;
-	world_material.shininess = 8.0f;
+	world_material.ks = 0.4f;
+	world_material.roughness = 0.42f;
 
 	wallbang_material = Material();
 	wallbang_material.rgbgen.args[ 0 ] = 0.17f * 2.0f;
 	wallbang_material.rgbgen.args[ 1 ] = 0.17f * 2.0f;
 	wallbang_material.rgbgen.args[ 2 ] = 0.17f * 2.0f;
 	wallbang_material.rgbgen.args[ 3 ] = 1.0f;
-	wallbang_material.specular = 3.0f;
-	wallbang_material.shininess = 8.0f;
+	wallbang_material.ks = 0.0f;
+	wallbang_material.roughness = 0.8f;
 
 	LoadBuiltinTextures();
 
@@ -939,7 +953,7 @@ PipelineState MaterialToPipelineState( const Material * material, Vec4 color, bo
 		color.x = material->rgbgen.args[ 0 ];
 		color.y = material->rgbgen.args[ 1 ];
 		color.z = material->rgbgen.args[ 2 ];
-		pipeline.set_uniform( "u_Material", UploadMaterialUniforms( color, Vec2( 0.0f ), material->alpha_cutoff, material->specular, material->shininess, Vec3( 0.0f ), Vec3( 0.0f ) ) );
+		pipeline.set_uniform( "u_Material", UploadMaterialUniforms( color, Vec2( 0.0f ), material->alpha_cutoff, material->ks, material->metallic, material->roughness, material->ior, material->anisotropic, Vec3( 0.0f ), Vec3( 0.0f ) ) );
 		pipeline.set_texture( "u_NearShadowmapTexture", &frame_static.near_shadowmap_fb.depth_texture );
 		pipeline.set_texture( "u_FarShadowmapTexture", &frame_static.far_shadowmap_fb.depth_texture );
 		pipeline.set_texture_array( "u_DecalAtlases", DecalAtlasTextureArray() );
@@ -1023,7 +1037,7 @@ PipelineState MaterialToPipelineState( const Material * material, Vec4 color, bo
 	}
 
 	pipeline.set_texture( "u_BaseTexture", material->texture );
-	pipeline.set_uniform( "u_Material", UploadMaterialUniforms( color, Vec2( material->texture->width, material->texture->height ), material->alpha_cutoff, material->specular, material->shininess, tcmod_row0, tcmod_row1 ) );
+	pipeline.set_uniform( "u_Material", UploadMaterialUniforms( color, Vec2( material->texture->width, material->texture->height ), material->alpha_cutoff, material->ks, material->metallic, material->roughness, material->ior, material->anisotropic, tcmod_row0, tcmod_row1 ) );
 
 	if( material->alpha_cutoff > 0 ) {
 		pipeline.shader = &shaders.standard_alphatest;
@@ -1032,7 +1046,13 @@ PipelineState MaterialToPipelineState( const Material * material, Vec4 color, bo
 		pipeline.shader = material->shaded ? &shaders.standard_skinned_shaded : &shaders.standard_skinned;
 	}
 	else {
-		pipeline.shader = material->shaded ? &shaders.standard_shaded : &shaders.standard;
+		// pipeline.shader = material->shaded ? &shaders.standard_shaded : &shaders.standard;
+		if (material->shaded) {
+			pipeline.shader = &shaders.standard_shaded;
+			AddDynamicsToPipeline( &pipeline );
+		} else {
+			pipeline.shader = &shaders.standard;
+		}
 	}
 
 	return pipeline;

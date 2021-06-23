@@ -10,16 +10,6 @@ float ProjectedScale( vec3 p, vec3 o, vec3 d ) {
 	return dot( p - o, d ) / dot( d, d );
 }
 
-// must match the CPU OrthonormalBasis
-void OrthonormalBasis( vec3 v, out vec3 tangent, out vec3 bitangent ) {
-	float s = step( 0.0, v.z ) * 2.0 - 1.0;
-	float a = -1.0 / ( s + v.z );
-	float b = v.x * v.y * a;
-
-	tangent = vec3( 1.0 + s * v.x * v.x * a, s * b, -s * v.x );
-	bitangent = vec3( b, s + v.y * v.y * a, -v.y );
-}
-
 void applyDecals( int count, int tile_index, inout vec4 diffuse, inout vec3 normal ) {
 	float accumulated_alpha = 1.0;
 	vec3 accumulated_color = vec3( 0.0 );

@@ -5,7 +5,10 @@ layout( std140 ) uniform u_DynamicLight {
 uniform isamplerBuffer u_DynamicLightTiles;
 uniform samplerBuffer u_DynamicLightData;
 
-void applyDynamicLights( int count, int tile_index, vec3 position, vec3 normal, vec3 viewDir, inout vec3 lambertlight, inout vec3 specularlight ) {
+void applyDynamicLights( int count, int tile_index, mat3 invTBN, vec3 position, vec3 normal, vec3 wo, inout vec3 diffuselight, inout vec3 specularlight ) {
+
+	vec3 tangent, bitangent;
+
 	for( int i = 0; i < count; i++ ) {
 		int idx = tile_index * 50 + i; // NOTE(msc): 50 = MAX_DLIGHTS_PER_TILE
 		int dlight_index = texelFetch( u_DynamicLightTiles, idx ).x;
@@ -21,7 +24,16 @@ void applyDynamicLights( int count, int tile_index, vec3 position, vec3 normal, 
 
 		float dlight_intensity = max( 0.0, intensity / ( dist * dist ) - DLIGHT_CUTOFF );
 
-		lambertlight += dlight_color * dlight_intensity * max( 0.0, LambertLight( normal, -lightdir ) );
-		specularlight += dlight_color * max( 0.0, 1.0 - dist / radius ) * SpecularLight( normal, lightdir, viewDir, u_Shininess ) * u_Specular;
+		vec3 L = -lightdir;
+		vec3 wi = invTBN * L;
+
+		float kS = SATURATE(u_Ks);
+		float kD = 1.0 - kS;
+
+		diffuselight += dlight_color * dlight_intensity * Lambert(wi);
+		specularlight += dlight_color * max(0.0, 1.0-dist/radius) * EricHeitz2018GGX(wo, wi, u_Roughness, u_Anisotropic, u_IOR);
+
+		//lambertlight += dlight_color * dlight_intensity * max( 0.0, LambertLight( normal, -lightdir ) );
+		//specularlight += dlight_color * max( 0.0, 1.0 - dist / radius ) * SpecularLight( normal, lightdir, viewDir, u_Shininess ) * u_Specular;
 	}
 }

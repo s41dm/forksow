@@ -39,3 +39,90 @@ vec3 NormalToRGB( vec3 normal ) {
 float Unlerp( float lo, float x, float hi ) {
 	return ( x - lo ) / ( hi - lo );
 }
+
+// must match the CPU OrthonormalBasis
+void OrthonormalBasis( vec3 v, out vec3 tangent, out vec3 bitangent ) {
+	float s = step( 0.0, v.z ) * 2.0 - 1.0;
+	float a = -1.0 / ( s + v.z );
+	float b = v.x * v.y * a;
+
+	tangent = vec3( 1.0 + s * v.x * v.x * a, s * b, -s * v.x );
+	bitangent = vec3( b, s + v.y * v.y * a, -v.y );
+}
+
+
+#define SATURATE(x) clamp(x,0.0,1.0)
+
+float Square(float x) { return x * x; }
+
+float EricHeitz2018GGXG1Lambda(vec3 V, float alpha_x, float alpha_y)
+{
+	float Vx2 = Square(V.x);
+	float Vy2 = Square(V.y);
+	float Vz2 = Square(V.z);
+	float ax2 = Square(alpha_x);
+	float ay2 = Square(alpha_y);
+	return (-1.0 + sqrt(1.0 + (Vx2 * ax2 + Vy2 * ay2) / Vz2)) / 2.0;
+}
+
+float EricHeitz2018GGXG1(vec3 V, float alpha_x, float alpha_y)
+{
+	return 1.0 / (1.0 + EricHeitz2018GGXG1Lambda(V, alpha_x, alpha_y));
+}
+
+// wm: microfacet normal in frame
+float EricHeitz2018GGXD(in vec3 N, in float alpha_x, in float alpha_y)
+{
+	float Nx2 = Square(N.x);
+	float Ny2 = Square(N.y);
+	float Nz2 = Square(N.z);
+	float ax2 = Square(alpha_x);
+	float ay2 = Square(alpha_y);
+	return 1.0 / (M_PI * alpha_x * alpha_y * Square(Nx2 / ax2 + Ny2 / ay2 + Nz2));
+}
+
+
+float EricHeitz2018GGXG2(in vec3 V, in vec3 L, in float alpha_x, in float alpha_y)
+{
+	return EricHeitz2018GGXG1(V, alpha_x, alpha_y) * EricHeitz2018GGXG1(L, alpha_x, alpha_y);
+}
+
+vec3 SchlickFresnel(in float NoX, in vec3 F0)
+{
+	return F0 + (1.0 - F0) * pow(1.0 - NoX, 5.0);
+}
+
+
+float Theta(in vec3 w) { return acos(w.z / length(w)); }
+float CosTheta(in vec3 w) { return cos(Theta(w)); }
+
+vec3 EricHeitz2018GGX(in vec3 V, in vec3 L, in float roughness, in float anisotropic, in float ior) {
+	float alpha = roughness * roughness;
+
+	float NoV = CosTheta(V);
+	float NoL = CosTheta(L);
+
+	if (NoL < 0.0 || NoV < 0.0) return vec3(0.0);
+
+	vec3 H = normalize(V + L);
+	float NoH = max(dot(V,H),0.04);
+
+	vec3 F0 = vec3(abs((1.0 - ior)/(1.0 + ior)));
+	F0 *= F0;
+
+	vec3 F = SchlickFresnel(NoH, F0);
+	float D = EricHeitz2018GGXD(H, alpha, alpha);
+	float G2 = EricHeitz2018GGXG2(V, L, alpha, alpha);
+
+	return (F * D * G2) / (4.0f * NoL * NoV + 0.04);
+}
+
+// expect tangent space light vector
+float HalfLambert(vec3 v) {
+	float ill = max(CosTheta(v),0.0);
+	return pow(ill,2.0)*0.5+0.5;
+}
+
+float Lambert(vec3 v) {
+	return max(CosTheta(v),0.0);
+}
