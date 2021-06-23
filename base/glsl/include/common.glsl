@@ -96,25 +96,35 @@ vec3 SchlickFresnel(in float NoX, in vec3 F0)
 float Theta(in vec3 w) { return acos(w.z / length(w)); }
 float CosTheta(in vec3 w) { return cos(Theta(w)); }
 
-vec3 EricHeitz2018GGX(in vec3 V, in vec3 L, in float roughness, in float anisotropic, in float ior) {
+vec3 EricHeitz2018GGX(in vec3 wo, in vec3 wi, in vec3 albedo, in float metallic, in float roughness, in float anisotropic, in float ior) {
 	float alpha = roughness * roughness;
+    float aspect = sqrt(1.0 - 0.9 * anisotropic);
+    float alpha_x = alpha * aspect;
+    float alpha_y = alpha / aspect;
 
-	float NoV = CosTheta(V);
-	float NoL = CosTheta(L);
+	float NoV = CosTheta(wo);
+	float NoL = CosTheta(wi);
 
-	if (NoL < 0.0 || NoV < 0.0) return vec3(0.0);
+	//if (NoV <= 0.0 || NoL <= 0.0) return vec3(0.0);
 
-	vec3 H = normalize(V + L);
-	float NoH = max(dot(V,H),0.04);
+	vec3 wm = normalize(wo + wi);
+	float cosT = SATURATE(CosTheta(wo));//wo.z;
 
 	vec3 F0 = vec3(abs((1.0 - ior)/(1.0 + ior)));
 	F0 *= F0;
+	F0 = mix(F0, albedo, metallic);
 
-	vec3 F = SchlickFresnel(NoH, F0);
-	float D = EricHeitz2018GGXD(H, alpha, alpha);
-	float G2 = EricHeitz2018GGXG2(V, L, alpha, alpha);
+	float mask = step(0.0, NoL) * step(0.0, CosTheta(wm));
 
-	return (F * D * G2) / (4.0f * NoL * NoV + 0.04);
+	vec3 F = SchlickFresnel(cosT, F0);
+	float D = EricHeitz2018GGXD(wm, alpha_x, alpha_y);
+	float G2 = EricHeitz2018GGXG2(wo, wi, alpha_x, alpha_y);
+
+	//return vec3(F*D*G2);
+
+	float denom = SATURATE( 4.0 * (NoV * /*SATURATE(CosTheta(wm))*/ SATURATE(CosTheta(wm)) + 0.05) );
+
+	return (F * D * G2 * mask) / denom;// / (4.0 * max(NoL,0.0) * max(NoL,0.0) + 0.04);
 }
 
 // expect tangent space light vector

@@ -750,17 +750,17 @@ void InitMaterials() {
 	num_materials = 0;
 
 	world_material = Material();
-	world_material.rgbgen.args[ 0 ] = 0.17f;
-	world_material.rgbgen.args[ 1 ] = 0.17f;
-	world_material.rgbgen.args[ 2 ] = 0.17f;
+	world_material.rgbgen.args[ 0 ] = 0.25f;
+	world_material.rgbgen.args[ 1 ] = 0.25f;
+	world_material.rgbgen.args[ 2 ] = 0.25f;
 	world_material.rgbgen.args[ 3 ] = 1.0f;
 	world_material.ks = 0.4f;
 	world_material.roughness = 0.42f;
 
 	wallbang_material = Material();
-	wallbang_material.rgbgen.args[ 0 ] = 0.17f * 2.0f;
-	wallbang_material.rgbgen.args[ 1 ] = 0.17f * 2.0f;
-	wallbang_material.rgbgen.args[ 2 ] = 0.17f * 2.0f;
+	wallbang_material.rgbgen.args[ 0 ] = 0.25f * 2.0f;
+	wallbang_material.rgbgen.args[ 1 ] = 0.25f * 2.0f;
+	wallbang_material.rgbgen.args[ 2 ] = 0.25f * 2.0f;
 	wallbang_material.rgbgen.args[ 3 ] = 1.0f;
 	wallbang_material.ks = 0.0f;
 	wallbang_material.roughness = 0.8f;

@@ -139,39 +139,43 @@ void main() {
 	vec3 L = -u_LightDir;
 	vec3 tangent, bitangent;
 
-	OrthonormalBasis(normal, tangent, bitangent);
+	tangent = normalize(cross(normal, normal.zxy));
+    bitangent = cross(normal, tangent);
+
+	//OrthonormalBasis(normal, tangent, bitangent);
 
 	mat3 invTBN = transpose(mat3(tangent, bitangent, normal));
 
 	vec3 wi = invTBN * L;
 	vec3 wo = invTBN * V;
+	vec3 tn = invTBN * normal;
 
 	float kS = SATURATE(u_Ks);
 	float kD = 1.0 - kS;
 
-	vec3 diffuselight = suncolor * Lambert(wi);
+	vec3 diffuselight = suncolor * HalfLambert(wi);
 
-	vec3 spec = EricHeitz2018GGX(wo, wi, u_Roughness, u_Anisotropic, u_IOR);
+	vec3 albedo = u_MaterialColor.rgb;
+	vec3 spec = EricHeitz2018GGX(wo, wi, albedo, u_Metallic, u_Roughness, u_Anisotropic, u_IOR);
 
 	vec3 specularlight = suncolor * spec;
 
 	float shadowlight = 1.0;
 	#if APPLY_SHADOWS
 		shadowlight = GetLight( normal );
-		specularlight = specularlight * shadowlight;
+		//specularlight = specularlight * shadowlight;
 	#endif
 	shadowlight = shadowlight * 0.5 + 0.5;
 
 #if APPLY_DLIGHTS
 	applyDynamicLights( decal_dlight_count.y, tile_index, invTBN, v_Position, normal, wo, diffuselight, specularlight );
 #endif
-	diffuselight = diffuselight * 0.5 + 0.5;
+	//diffuselight = diffuselight * 0.5 + 0.5;
 #if APPLY_DRAWFLAT
-		diffuselight = diffuselight * 0.5 + 0.5;
+	//diffuselight = diffuselight * 0.5 + 0.5;
 #endif
 
 	diffuse.rgb = shadowlight * ( kD * diffuse.rgb * diffuselight + kS * specularlight );
-
 #endif
 
 #if APPLY_FOG

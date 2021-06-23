@@ -31,8 +31,8 @@ void applyDynamicLights( int count, int tile_index, mat3 invTBN, vec3 position, 
 		float kD = 1.0 - kS;
 
 		diffuselight += dlight_color * dlight_intensity * Lambert(wi);
-		specularlight += dlight_color * max(0.0, 1.0-dist/radius) * EricHeitz2018GGX(wo, wi, u_Roughness, u_Anisotropic, u_IOR);
-
+		specularlight += dlight_color * max(0.0, 1.0-dist/radius) * EricHeitz2018GGX(wo, wi, u_MaterialColor.rgb, u_Metallic, u_Roughness, u_Anisotropic, u_IOR);
+		
 		//lambertlight += dlight_color * dlight_intensity * max( 0.0, LambertLight( normal, -lightdir ) );
 		//specularlight += dlight_color * max( 0.0, 1.0 - dist / radius ) * SpecularLight( normal, lightdir, viewDir, u_Shininess ) * u_Specular;
 	}
